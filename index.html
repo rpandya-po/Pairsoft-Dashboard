@@ -1,0 +1,1814 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Defect Operations Dashboard</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    :root {
+      --bg: #eef3f9;
+      --surface: #f7fbff;
+      --surface-2: #eef5fc;
+      --card: #fbfdff;
+      --card-2: #f4f8fd;
+      --text: #1f3d63;
+      --muted: #6781a4;
+      --line: #d7e3f0;
+      --shadow: 0 10px 28px rgba(33, 65, 110, 0.08);
+      --accent: #3b82f6;
+      --accent-2: #70a8ff;
+      --success: #22a06b;
+      --danger: #e25d5d;
+      --warning: #d59a23;
+      --pill: #edf4fb;
+      --overlay: rgba(28, 52, 91, 0.18);
+      --missed-ring: #e6e0d8;
+    }
+
+    [data-theme="warm"] {
+      --bg: #f4efe7;
+      --surface: #fbf7f0;
+      --surface-2: #f6efe4;
+      --card: #fffaf2;
+      --card-2: #f8f1e5;
+      --text: #443225;
+      --muted: #8c745c;
+      --line: #e4d8c8;
+      --shadow: 0 10px 28px rgba(90, 67, 37, 0.08);
+      --accent: #c69424;
+      --accent-2: #8890f2;
+      --success: #23a868;
+      --danger: #db5a55;
+      --warning: #d38c00;
+      --pill: #efe3cc;
+      --overlay: rgba(43, 28, 9, 0.2);
+      --missed-ring: #e6ddd3;
+    }
+
+    [data-theme="dark"] {
+      --bg: #0e1723;
+      --surface: #121d2b;
+      --surface-2: #162233;
+      --card: #172333;
+      --card-2: #15202f;
+      --text: #ebf3ff;
+      --muted: #96aac8;
+      --line: #27374f;
+      --shadow: 0 12px 28px rgba(0, 0, 0, 0.32);
+      --accent: #f3b74c;
+      --accent-2: #7ea8ff;
+      --success: #35b97b;
+      --danger: #ff7d74;
+      --warning: #ffc14f;
+      --pill: #223149;
+      --overlay: rgba(0, 0, 0, 0.48);
+      --missed-ring: #2a384e;
+    }
+
+    [data-theme="light"] {
+      --bg: #eef3f9;
+      --surface: #f7fbff;
+      --surface-2: #eef5fc;
+      --card: #fbfdff;
+      --card-2: #f4f8fd;
+      --text: #1f3d63;
+      --muted: #6781a4;
+      --line: #d7e3f0;
+      --shadow: 0 10px 28px rgba(33, 65, 110, 0.08);
+      --accent: #3b82f6;
+      --accent-2: #70a8ff;
+      --success: #22a06b;
+      --danger: #e25d5d;
+      --warning: #d59a23;
+      --pill: #edf4fb;
+      --overlay: rgba(28, 52, 91, 0.18);
+      --missed-ring: #e7edf5;
+    }
+
+    [data-theme="blue"] {
+      --bg: #e9f0fb;
+      --surface: #f5f9ff;
+      --surface-2: #edf4ff;
+      --card: #fcfdff;
+      --card-2: #f4f8ff;
+      --text: #243f6d;
+      --muted: #6a83ad;
+      --line: #d6e2f3;
+      --shadow: 0 12px 28px rgba(41, 70, 125, 0.09);
+      --accent: #4c7dff;
+      --accent-2: #7ea8ff;
+      --success: #279c76;
+      --danger: #df6464;
+      --warning: #d9a128;
+      --pill: #e8effc;
+      --overlay: rgba(29, 54, 111, 0.18);
+      --missed-ring: #dfe7f3;
+    }
+
+    * { box-sizing: border-box; }
+
+    html, body {
+      margin: 0;
+      padding: 0;
+      background: var(--bg);
+      color: var(--text);
+      font-family: Segoe UI, Inter, Arial, sans-serif;
+      min-height: 100%;
+      overflow-x: auto;
+      overflow-y: auto;
+    }
+
+    body {
+      padding-top: 10px;
+    }
+
+    .page {
+      width: 100%;
+      min-width: 1120px;
+      max-width: 1120px;
+      margin: 0 auto;
+      padding: 10px 12px 96px;
+    }
+
+    .panel,
+    .card {
+      background: linear-gradient(180deg, var(--card), var(--card-2));
+      border: 1px solid var(--line);
+      border-radius: 22px;
+      box-shadow: var(--shadow);
+      min-width: 0;
+    }
+
+    .hero-grid {
+      display: grid;
+      grid-template-columns: 1.15fr 0.85fr;
+      gap: 12px;
+      margin-bottom: 12px;
+      align-items: stretch;
+    }
+
+    .panel {
+      padding: 16px;
+    }
+
+    .title-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 7px 12px;
+      border-radius: 999px;
+      background: var(--pill);
+      color: var(--accent);
+      font-weight: 800;
+      font-size: 12px;
+      letter-spacing: .04em;
+      text-transform: uppercase;
+      margin-bottom: 14px;
+    }
+
+    h1 {
+      margin: 0 0 10px;
+      font-size: 22px;
+      line-height: 1.15;
+    }
+
+    .subtext {
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.5;
+      margin-bottom: 14px;
+    }
+
+    .meta-row, .chip-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+
+    .chip {
+      display: inline-flex;
+      align-items: center;
+      padding: 9px 12px;
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      font-size: 12px;
+      color: var(--muted);
+      background: color-mix(in srgb, var(--card) 80%, transparent);
+      white-space: nowrap;
+    }
+
+    .filters {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+      align-content: start;
+    }
+
+    .field {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .field label {
+      font-size: 12px;
+      color: var(--muted);
+      font-weight: 700;
+    }
+
+    select, .btn, textarea {
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      background: var(--surface);
+      color: var(--text);
+      font: inherit;
+    }
+
+    select {
+      padding: 12px 14px;
+      min-height: 46px;
+      outline: none;
+      width: 100%;
+    }
+
+    .actions {
+      grid-column: 1 / -1;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      align-items: center;
+      margin-top: 2px;
+    }
+
+    .btn {
+      padding: 12px 16px;
+      cursor: pointer;
+      font-weight: 800;
+      transition: transform .15s ease, opacity .15s ease;
+      box-shadow: none;
+      white-space: nowrap;
+    }
+
+    .btn:hover { transform: translateY(-1px); }
+
+    .btn.primary {
+      background: linear-gradient(90deg, var(--accent), var(--accent-2));
+      color: white;
+      border: none;
+    }
+
+    .btn.ghost {
+      background: var(--surface);
+      color: var(--text);
+    }
+
+    .helper {
+      grid-column: 1 / -1;
+      font-size: 12px;
+      color: var(--muted);
+      margin-top: -2px;
+    }
+
+    .kpi-grid {
+      display: grid;
+      grid-template-columns: repeat(6, minmax(0, 1fr));
+      gap: 12px;
+      margin-bottom: 12px;
+    }
+
+    .kpi-card {
+      padding: 14px;
+      min-height: 110px;
+    }
+
+    .kpi-label {
+      font-size: 12px;
+      color: var(--muted);
+      font-weight: 800;
+      margin-bottom: 10px;
+    }
+
+    .kpi-value {
+      font-size: 22px;
+      font-weight: 900;
+      margin-bottom: 8px;
+    }
+
+    .kpi-foot {
+      font-size: 12px;
+      font-weight: 800;
+    }
+
+    .danger { color: var(--danger); }
+    .success { color: var(--success); }
+    .warning { color: var(--warning); }
+
+    .main-grid {
+      display: grid;
+      grid-template-columns: repeat(12, minmax(0, 1fr));
+      gap: 12px;
+    }
+
+    .span-12 { grid-column: span 12; }
+    .span-8 { grid-column: span 8; }
+    .span-6 { grid-column: span 6; }
+    .span-4 { grid-column: span 4; }
+
+    .card {
+      padding: 16px;
+      overflow: visible;
+    }
+
+    .card-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 12px;
+      margin-bottom: 10px;
+    }
+
+    .card-title {
+      margin: 0;
+      font-size: 16px;
+      font-weight: 900;
+    }
+
+    .card-sub {
+      margin-top: 4px;
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.45;
+    }
+
+    .tag {
+      flex: 0 0 auto;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-width: 44px;
+      padding: 9px 12px;
+      border-radius: 999px;
+      font-size: 12px;
+      font-weight: 800;
+      color: var(--text);
+      background: var(--pill);
+      border: 1px solid var(--line);
+      white-space: nowrap;
+    }
+
+    .chart-shell {
+      border: 1px solid var(--line);
+      border-radius: 22px;
+      background: color-mix(in srgb, var(--surface) 82%, transparent);
+      padding: 12px;
+      min-height: 285px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .compact-shell {
+      min-height: 240px;
+    }
+
+    .footer-line {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+      margin-top: 12px;
+      color: var(--muted);
+      font-size: 12px;
+      min-width: 0;
+    }
+
+    .footer-line .pill {
+      padding: 8px 12px;
+      background: var(--pill);
+      border-radius: 999px;
+      border: 1px solid var(--line);
+      white-space: nowrap;
+      flex: 0 0 auto;
+    }
+
+    .bar-list {
+      display: grid;
+      gap: 14px;
+      padding: 8px 4px 4px;
+    }
+
+    .bar-row {
+      display: grid;
+      grid-template-columns: 92px 1fr 36px;
+      gap: 10px;
+      align-items: center;
+      min-width: 0;
+    }
+
+    .bar-label {
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 800;
+      text-align: right;
+    }
+
+    .bar-track {
+      position: relative;
+      height: 20px;
+      border-radius: 999px;
+      background: color-mix(in srgb, var(--line) 60%, transparent);
+      overflow: hidden;
+    }
+
+    .bar-fill {
+      position: absolute;
+      inset: 0 auto 0 0;
+      border-radius: 999px;
+      width: 0;
+    }
+
+    .bar-value {
+      font-size: 12px;
+      font-weight: 900;
+    }
+
+    .table-wrap {
+      overflow: hidden;
+      border: 1px solid var(--line);
+      border-radius: 20px;
+      background: color-mix(in srgb, var(--surface) 86%, transparent);
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 12px;
+    }
+
+    th, td {
+      padding: 11px 12px;
+      border-bottom: 1px solid var(--line);
+      text-align: left;
+    }
+
+    th {
+      color: var(--muted);
+      font-size: 11px;
+      font-weight: 900;
+    }
+
+    tr:last-child td { border-bottom: none; }
+
+    .sla-shell {
+      position: relative;
+      min-height: 240px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding-top: 8px;
+    }
+
+    .sla-summary {
+      position: absolute;
+      top: 8px;
+      right: 14px;
+      text-align: right;
+      font-size: 12px;
+      line-height: 1.55;
+      font-weight: 900;
+      z-index: 2;
+    }
+
+    .donut-wrap {
+      position: relative;
+      width: 210px;
+      height: 210px;
+      margin-top: 6px;
+    }
+
+    .donut-center {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 30px;
+      font-weight: 900;
+      pointer-events: none;
+    }
+
+    .drawer-overlay {
+      position: fixed;
+      inset: 0;
+      background: var(--overlay);
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity .2s ease;
+      z-index: 998;
+    }
+
+    .drawer-overlay.show {
+      opacity: 1;
+      pointer-events: auto;
+    }
+
+    .ai-drawer {
+      position: fixed;
+      top: 0;
+      right: 0;
+      width: 286px;
+      max-width: 286px;
+      height: 100vh;
+      background: linear-gradient(180deg, var(--card), var(--card-2));
+      border-left: 1px solid var(--line);
+      box-shadow: -12px 0 28px rgba(0,0,0,0.14);
+      transform: translateX(100%);
+      transition: transform .22s ease;
+      z-index: 999;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    .ai-drawer.open { transform: translateX(0); }
+
+    .drawer-head {
+      padding: 14px 14px 10px;
+      border-bottom: 1px solid var(--line);
+      flex: 0 0 auto;
+    }
+
+    .drawer-title {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 8px;
+    }
+
+    .drawer-title h3 {
+      margin: 0;
+      font-size: 17px;
+      line-height: 1.2;
+    }
+
+    .icon-btn {
+      border: 1px solid var(--line);
+      background: var(--surface);
+      color: var(--text);
+      border-radius: 12px;
+      width: 34px;
+      height: 34px;
+      cursor: pointer;
+      font-size: 16px;
+      flex: 0 0 auto;
+    }
+
+    .drawer-body {
+      padding: 12px 14px 10px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      min-height: 0;
+      flex: 1 1 auto;
+      overflow-y: auto;
+      overflow-x: hidden;
+    }
+
+    .insight-box {
+      border: 1px solid var(--line);
+      border-radius: 18px;
+      background: color-mix(in srgb, var(--surface) 88%, transparent);
+      padding: 11px 12px;
+      overflow: visible;
+    }
+    
+    .insight-head {
+      font-size: 11px;
+      font-weight: 900;
+      color: var(--muted);
+      margin-bottom: 8px;
+      text-transform: uppercase;
+      letter-spacing: .04em;
+    }
+   .insight-text {
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--text);
+
+  display: block;        /* 🔥 important */
+  height: auto;          /* 🔥 important */
+  white-space: normal;   /* 🔥 wrap allow */
+}
+/* 
+    .insight-text {
+      font-size: 12px;
+      line-height: 1.5;
+       color: var(--text); 
+      color: #1f2937;
+      word-break: break-word;
+    }
+ */
+    .prompt-grid {
+      display: grid;
+      gap: 8px;
+    }
+
+    .prompt-chip {
+      border: 1px solid var(--line);
+      background: var(--surface);
+      color: var(--text);
+      border-radius: 999px;
+      padding: 9px 11px;
+      text-align: left;
+      cursor: pointer;
+      font-size: 11px;
+      font-weight: 800;
+      width: 100%;
+    }
+
+    .drawer-foot {
+      padding: 12px 14px 14px;
+      border-top: 1px solid var(--line);
+      background: color-mix(in srgb, var(--card) 90%, transparent);
+      flex: 0 0 auto;
+      overflow: hidden;
+    }
+
+    textarea {
+      width: 100%;
+      min-height: 78px;
+      max-height: 78px;
+      padding: 11px 12px;
+      resize: none;
+      outline: none;
+      overflow: auto;
+    }
+
+    .drawer-actions {
+      display: flex;
+      gap: 8px;
+      margin-top: 10px;
+      flex-wrap: wrap;
+    }
+
+    .mini-note {
+      margin-top: 10px;
+      color: var(--muted);
+      font-size: 11px;
+      line-height: 1.45;
+    }
+
+    .fab {
+      position: fixed;
+      right: 16px;
+      bottom: 16px;
+      z-index: 997;
+      padding: 12px 18px;
+      border: none;
+      border-radius: 18px;
+      background: linear-gradient(90deg, var(--accent), var(--accent-2));
+      color: white;
+      font-weight: 900;
+      box-shadow: 0 12px 26px rgba(0,0,0,0.15);
+      cursor: pointer;
+      white-space: nowrap;
+    }
+  </style>
+</head>
+<body data-theme="light">
+  <div class="page">
+    <section class="hero-grid">
+      <div class="panel">
+        <div class="title-badge">Demo Mode • Frontend Prototype</div>
+        <h1>Defect Operations Dashboard</h1>
+        <div class="subtext">
+          Compact single-file dashboard designed for Azure DevOps web widgets. Demo mode is built in, theme switching is live, and the layout is intentionally width-controlled so 7–8 tile widgets can still use horizontal scrolling when needed.
+        </div>
+        <div class="meta-row" id="metaRow"></div>
+        <div class="chip-row" style="margin-top:10px;">
+          <div class="chip">Theme switching enabled</div>
+          <div class="chip">AI insight drawer included</div>
+        </div>
+      </div>
+
+      <div class="panel">
+        <div class="filters">
+          <div class="field">
+            <label>Date Range</label>
+            <select id="dateRange">
+              <option>Last 6 Months</option>
+              <option>Last 3 Months</option>
+              <option>This Month</option>
+              <option>Last 12 Months</option>
+            </select>
+          </div>
+          <div class="field">
+            <label>Theme</label>
+            <select id="themeSelect">
+              <option value="light">Light Professional</option>
+              <option value="warm">Warm BI</option>
+              <option value="dark">Dark Classic</option>
+              <option value="blue">Blue Executive</option>
+            </select>
+          </div>
+          <div class="field">
+            <label>Product</label>
+            <select id="productFilter"></select>
+          </div>
+          <div class="field">
+            <label>Customer</label>
+            <select id="customerFilter"></select>
+          </div>
+          <div class="field">
+            <label>Customer Status</label>
+            <select id="statusFilter"></select>
+          </div>
+          <div class="field">
+            <label>Severity Focus</label>
+            <select id="severityFilter"></select>
+          </div>
+          <div class="actions">
+            <button class="btn primary" id="applyBtn">Apply Demo Filters</button>
+            <button class="btn ghost" id="resetBtn">Reset</button>
+            <button class="btn ghost" id="openAiBtn">Open AI Insights</button>
+          </div>
+          <div class="helper">Tip: this prototype updates all widgets locally without any backend.</div>
+        </div>
+      </div>
+    </section>
+
+    <section class="kpi-grid" id="kpiGrid"></section>
+
+    <section class="main-grid">
+      <article class="card span-12">
+        <div class="card-header">
+          <div>
+            <div class="card-title">Created vs Closed Trend</div>
+            <div class="card-sub">Monthly inflow versus closure movement for the selected period.</div>
+          </div>
+          <div class="tag">Trend</div>
+        </div>
+        <div class="chart-shell"><canvas id="trendChart"></canvas></div>
+        <div class="footer-line"><span>Demo monthly dataset</span><span class="pill" id="trendFoot"></span></div>
+      </article>
+
+      <article class="card span-4">
+        <div class="card-header">
+          <div>
+            <div class="card-title">Pending by Severity</div>
+            <div class="card-sub">Active backlog risk split.</div>
+          </div>
+          <div class="tag">Risk</div>
+        </div>
+        <div class="chart-shell compact-shell"><canvas id="severityChart"></canvas></div>
+        <div class="footer-line"><span id="severityFoot"></span><span class="pill">Backlog</span></div>
+      </article>
+
+      <article class="card span-4">
+        <div class="card-header">
+          <div>
+            <div class="card-title">Pending by State</div>
+            <div class="card-sub">Where open work is sitting operationally.</div>
+          </div>
+          <div class="tag">Flow</div>
+        </div>
+        <div class="chart-shell compact-shell"><canvas id="stateChart"></canvas></div>
+        <div class="footer-line"><span id="stateFoot"></span><span class="pill">Current open items</span></div>
+      </article>
+
+      <article class="card span-4">
+        <div class="card-header">
+          <div>
+            <div class="card-title">Pending by Product</div>
+            <div class="card-sub">Backlog concentration across products.</div>
+          </div>
+          <div class="tag">Products</div>
+        </div>
+        <div class="chart-shell compact-shell" style="display:flex; align-items:center;">
+          <div class="bar-list" id="productBars" style="width:100%;"></div>
+        </div>
+        <div class="footer-line"><span id="productFoot"></span><span class="pill">Top products</span></div>
+      </article>
+
+      <article class="card span-4">
+        <div class="card-header">
+          <div>
+            <div class="card-title">Weekly Throughput</div>
+            <div class="card-sub">Recent weekly created and closed trend.</div>
+          </div>
+          <div class="tag">Weekly</div>
+        </div>
+        <div class="chart-shell compact-shell"><canvas id="weeklyChart"></canvas></div>
+        <div class="footer-line"><span id="weeklyFoot"></span><span class="pill">Last 8 weeks</span></div>
+      </article>
+
+      <article class="card span-4">
+        <div class="card-header">
+          <div>
+            <div class="card-title">4-Week Target Compliance</div>
+            <div class="card-sub">Met target versus missed target.</div>
+          </div>
+          <div class="tag">SLA</div>
+        </div>
+        <div class="chart-shell compact-shell sla-shell">
+          <div class="sla-summary">
+            <div class="success" id="metLabel"></div>
+            <div class="danger" id="missedLabel"></div>
+          </div>
+          <div class="donut-wrap">
+            <canvas id="slaChart"></canvas>
+            <div class="donut-center" id="slaCenter"></div>
+          </div>
+        </div>
+        <div class="footer-line"><span id="slaFoot"></span><span class="pill">Current filter view</span></div>
+      </article>
+
+      <article class="card span-6">
+        <div class="card-header">
+          <div>
+            <div class="card-title">Developer Closures</div>
+            <div class="card-sub">Demo monthly closure distribution by developer.</div>
+          </div>
+          <div class="tag">Ownership</div>
+        </div>
+        <div class="chart-shell compact-shell" style="display:flex; align-items:center;">
+          <div class="bar-list" id="developerBars" style="width:100%;"></div>
+        </div>
+        <div class="footer-line"><span id="devFoot"></span><span class="pill">Selected period</span></div>
+      </article>
+
+      <article class="card span-6">
+        <div class="card-header">
+          <div>
+            <div class="card-title">Operational Attention Table</div>
+            <div class="card-sub">Priority areas based on backlog volume, ACV impact, and aging.</div>
+          </div>
+          <div class="tag">Review</div>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Product</th>
+                <th>Pending</th>
+                <th>High/Critical</th>
+                <th>ACV Impact</th>
+                <th>Old &gt; 8w</th>
+              </tr>
+            </thead>
+            <tbody id="attentionTable"></tbody>
+          </table>
+        </div>
+      </article>
+    </section>
+  </div>
+
+  <div class="drawer-overlay" id="drawerOverlay"></div>
+
+  <aside class="ai-drawer" id="aiDrawer">
+    <div class="drawer-head">
+      <div class="drawer-title">
+        <h3>AI Insights</h3>
+        <button class="icon-btn" id="closeDrawerBtn">×</button>
+      </div>
+      <div class="subtext" style="margin:0; font-size:12px;">Summarizes the current dashboard view using the selected demo filters.</div>
+    </div>
+
+    <div class="drawer-body">
+      <div class="insight-box">
+        <div class="insight-head">Executive Summary</div>
+        <div class="insight-text" id="summaryText"></div>
+      </div>
+      <div class="insight-box">
+        <div class="insight-head">Risks & Alerts</div>
+        <div class="insight-text" id="riskText"></div>
+      </div>
+      <div class="insight-box">
+        <div class="insight-head">Recommended Actions</div>
+        <div class="insight-text" id="actionText"></div>
+      </div>
+      <div class="insight-box">
+        <div class="insight-head">Quick Prompts</div>
+        <div class="prompt-grid">
+          <button class="prompt-chip">Summarize current dashboard</button>
+          <button class="prompt-chip">What is the current backlog risk?</button>
+          <button class="prompt-chip">Which product needs the most attention?</button>
+          <button class="prompt-chip">Explain created vs closed trend</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="drawer-foot">
+      <textarea id="aiPrompt" placeholder="Ask something like: Why is backlog rising, or which product needs attention?"></textarea>
+      <div class="drawer-actions">
+        <div id="aiSummary" style="margin-top:10px;"></div>
+        <button class="btn primary" id="generateBtn">Generate Insight</button>
+        <button class="btn ghost" id="readBtn">Read Aloud</button>
+      </div>
+      <div class="mini-note">In live mode, this panel can send the dashboard context JSON to your backend AI endpoint.</div>
+    </div>
+  </aside>
+
+  <button class="fab" id="fabBtn">Ask AI</button>
+
+  <script>
+(function () {
+  'use strict';
+
+  const SAMPLE_DATA = [
+    { ProjectName: 'PaperSave', CustomerName: 'Port Authority', CustomerStatus: 'Customer Live', Severity: 'Critical', State: 'Active', CreatedOn: '2026-02-10', AssignedTo: 'Aman' },
+    { ProjectName: 'PaperSave', CustomerName: 'Port Authority', CustomerStatus: 'Customer Live', Severity: 'High', State: 'Closed', CreatedOn: '2026-02-01', ClosedOn: '2026-02-18', AssignedTo: 'Pooja' },
+    { ProjectName: 'PairSoft Platform', CustomerName: 'The Thacher School', CustomerStatus: 'Customer Live', Severity: 'Medium', State: 'In Progress', CreatedOn: '2026-03-05', AssignedTo: 'Rakesh' },
+    { ProjectName: 'Webiplex', CustomerName: 'Cargo Carriers', CustomerStatus: 'Project', Severity: 'Low', State: 'Done', CreatedOn: '2026-03-01', ClosedOn: '2026-04-10', AssignedTo: 'Neha' }
+  ];
+
+  const state = {
+    theme: localStorage.getItem('defect_theme') || 'light',
+    filters: {
+      dateRange: 'Last 6 Months',
+      product: 'All Products',
+      customer: 'All Customers',
+      status: 'All Statuses',
+      severity: 'All'
+    }
+  };
+
+  let baseData = emptyBaseData();
+  let trendChart = null;
+  let severityChart = null;
+  let stateChart = null;
+  let weeklyChart = null;
+  let slaChart = null;
+
+  const el = id => document.getElementById(id);
+  const body = document.body;
+  const dateRange = el('dateRange');
+  const themeSelect = el('themeSelect');
+  const productFilter = el('productFilter');
+  const customerFilter = el('customerFilter');
+  const statusFilter = el('statusFilter');
+  const severityFilter = el('severityFilter');
+  const metaRow = el('metaRow');
+  const kpiGrid = el('kpiGrid');
+  const productBars = el('productBars');
+  const developerBars = el('developerBars');
+  const attentionTable = el('attentionTable');
+
+  function emptyBaseData() {
+    return {
+      products: [],
+      createdClosed: { labels: [], created: [], closed: [] },
+      weekly: { labels: [], created: [], closed: [] },
+      developers: [],
+      kpis: {
+        pendingBacklog: 0,
+        totalClosed: 0,
+        createdThisMonth: 0,
+        closedThisMonth: 0,
+        slaPercent: 0,
+        met: 0,
+        missed: 0,
+        acvImpact: 0,
+        highImpactItems: 0,
+        openOver4Weeks: 0,
+        averageAgeDays: 0
+      }
+    };
+  }
+
+  function getValue(item, names, fallback = '') {
+    for (const name of names) {
+      if (item && item[name] !== undefined && item[name] !== null && String(item[name]).trim() !== '') {
+        return item[name];
+      }
+    }
+    return fallback;
+  }
+
+  function cleanText(value, fallback = 'Unknown') {
+    const out = String(value ?? '').trim();
+    return out || fallback;
+  }
+
+  function escapeHtml(value) {
+    return String(value ?? '')
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#039;');
+  }
+
+  /* Search, sort, and pagination controls restored for dashboard list/table widgets. */
+  const DEFAULT_PAGE_SIZE = 10;
+  const FILTER_DELAY_MS = 250;
+  const filterTimers = {};
+  const gridState = {
+    productBars: { page: 1, filter: '', sort: 'value-desc', pageSize: DEFAULT_PAGE_SIZE },
+    developerBars: { page: 1, filter: '', sort: 'value-desc', pageSize: DEFAULT_PAGE_SIZE },
+    attentionTable: { page: 1, filter: '', sort: 'pending-desc', pageSize: DEFAULT_PAGE_SIZE }
+  };
+
+  function resetGridPages() { Object.keys(gridState).forEach(key => { gridState[key].page = 1; }); }
+
+  function controlHtml(key, placeholder, sortOptions) {
+    const st = gridState[key];
+    const pageSizes = [10, 20, 50, 100];
+    return `
+      <div class="grid-tools" data-grid-tools="${key}" style="display:flex; gap:8px; align-items:center; justify-content:space-between; width:100%; margin-bottom:10px; flex-wrap:wrap;">
+        <input data-grid-filter="${key}" value="${escapeHtml(st.filter)}" placeholder="${escapeHtml(placeholder)}" style="flex:1 1 150px; min-width:130px; border:1px solid var(--line); border-radius:14px; background:var(--surface); color:var(--text); padding:8px 10px; font:inherit; font-size:12px; outline:none;" />
+        <button data-grid-clear="${key}" title="Clear filter" style="border:1px solid var(--line); border-radius:12px; background:var(--surface); color:var(--text); padding:8px 10px; cursor:pointer; font-size:12px; font-weight:800;">Clear</button>
+        <select data-grid-pagesize="${key}" title="Rows per page" style="flex:0 0 86px; min-height:34px; border:1px solid var(--line); border-radius:14px; background:var(--surface); color:var(--text); padding:7px 9px; font-size:12px; outline:none;">
+          ${pageSizes.map(n => `<option value="${n}" ${Number(st.pageSize) === n ? 'selected' : ''}>${n}/page</option>`).join('')}
+        </select>
+        <select data-grid-sort="${key}" title="Sort" style="flex:0 0 132px; min-height:34px; border:1px solid var(--line); border-radius:14px; background:var(--surface); color:var(--text); padding:7px 9px; font-size:12px; outline:none;">
+          ${sortOptions.map(o => `<option value="${escapeHtml(o.value)}" ${st.sort === o.value ? 'selected' : ''}>${escapeHtml(o.label)}</option>`).join('')}
+        </select>
+      </div>`;
+  }
+
+  function pagerHtml(key, total, startIndex, endIndex) {
+    const st = gridState[key];
+    const pageSize = Number(st.pageSize || DEFAULT_PAGE_SIZE);
+    const totalPages = Math.max(1, Math.ceil(total / pageSize));
+    const currentPage = Math.min(st.page, totalPages);
+    st.page = currentPage;
+    return `
+      <div class="grid-pager" data-grid-pager="${key}" style="display:flex; justify-content:space-between; align-items:center; gap:8px; width:100%; margin-top:10px; flex-wrap:wrap; color:var(--muted); font-size:12px; font-weight:700;">
+        <span>${total ? `${startIndex + 1}-${endIndex} of ${total}` : '0 records'}</span>
+        <span style="display:flex; gap:6px; align-items:center;">
+          <button data-grid-page="${key}" data-page="prev" ${currentPage <= 1 ? 'disabled' : ''} style="border:1px solid var(--line); border-radius:10px; background:var(--surface); color:var(--text); padding:5px 9px; cursor:pointer; opacity:${currentPage <= 1 ? '.45' : '1'};">Prev</button>
+          <span>Page ${currentPage}/${totalPages}</span>
+          <button data-grid-page="${key}" data-page="next" ${currentPage >= totalPages ? 'disabled' : ''} style="border:1px solid var(--line); border-radius:10px; background:var(--surface); color:var(--text); padding:5px 9px; cursor:pointer; opacity:${currentPage >= totalPages ? '.45' : '1'};">Next</button>
+        </span>
+      </div>`;
+  }
+
+  function applyListFilterSortPage(key, rows, nameField, valueField) {
+    const st = gridState[key];
+    const q = st.filter.trim().toLowerCase();
+    let filtered = (rows || []).filter(r => !q || String(r[nameField] ?? '').toLowerCase().includes(q) || String(r[valueField] ?? '').toLowerCase().includes(q));
+    filtered.sort((a, b) => {
+      if (st.sort === 'name-asc') return String(a[nameField] ?? '').localeCompare(String(b[nameField] ?? ''));
+      if (st.sort === 'name-desc') return String(b[nameField] ?? '').localeCompare(String(a[nameField] ?? ''));
+      if (st.sort === 'value-asc') return Number(a[valueField] || 0) - Number(b[valueField] || 0);
+      return Number(b[valueField] || 0) - Number(a[valueField] || 0);
+    });
+    const pageSize = Number(st.pageSize || DEFAULT_PAGE_SIZE);
+    const totalPages = Math.max(1, Math.ceil(filtered.length / pageSize));
+    st.page = Math.min(Math.max(1, st.page), totalPages);
+    const start = (st.page - 1) * pageSize;
+    return { filtered, pageRows: filtered.slice(start, start + pageSize), start, end: Math.min(start + pageSize, filtered.length) };
+  }
+
+  function attachGridEvents() {
+    document.querySelectorAll('[data-grid-filter]').forEach(input => {
+      if (input.dataset.bound === '1') return;
+      input.dataset.bound = '1';
+      input.addEventListener('input', function () {
+        const key = this.getAttribute('data-grid-filter');
+        const value = this.value;
+        clearTimeout(filterTimers[key]);
+        filterTimers[key] = setTimeout(() => {
+          gridState[key].filter = value;
+          gridState[key].page = 1;
+          rerenderGridsOnly();
+        }, FILTER_DELAY_MS);
+      });
+    });
+    document.querySelectorAll('[data-grid-clear]').forEach(btn => {
+      if (btn.dataset.bound === '1') return;
+      btn.dataset.bound = '1';
+      btn.addEventListener('click', function () {
+        const key = this.getAttribute('data-grid-clear');
+        clearTimeout(filterTimers[key]);
+        gridState[key].filter = '';
+        gridState[key].page = 1;
+        const input = document.querySelector(`[data-grid-filter="${key}"]`);
+        if (input) input.value = '';
+        rerenderGridsOnly();
+      });
+    });
+    document.querySelectorAll('[data-grid-pagesize]').forEach(select => {
+      if (select.dataset.bound === '1') return;
+      select.dataset.bound = '1';
+      select.addEventListener('change', function () {
+        const key = this.getAttribute('data-grid-pagesize');
+        gridState[key].pageSize = Number(this.value || DEFAULT_PAGE_SIZE);
+        gridState[key].page = 1;
+        rerenderGridsOnly();
+      });
+    });
+    document.querySelectorAll('[data-grid-sort]').forEach(select => {
+      if (select.dataset.bound === '1') return;
+      select.dataset.bound = '1';
+      select.addEventListener('change', function () {
+        const key = this.getAttribute('data-grid-sort');
+        gridState[key].sort = this.value;
+        gridState[key].page = 1;
+        rerenderGridsOnly();
+      });
+    });
+    document.querySelectorAll('[data-grid-page]').forEach(btn => {
+      if (btn.dataset.bound === '1') return;
+      btn.dataset.bound = '1';
+      btn.addEventListener('click', function () {
+        const key = this.getAttribute('data-grid-page');
+        const action = this.getAttribute('data-page');
+        gridState[key].page += action === 'next' ? 1 : -1;
+        rerenderGridsOnly();
+      });
+    });
+  }
+
+  function rerenderGridsOnly() {
+    renderProductBars(baseData.products || []);
+    renderDeveloperBars();
+    renderAttention(baseData.products || []);
+  }
+
+
+  function parseDate(value) {
+    if (!value) return null;
+    if (value instanceof Date) return isNaN(value) ? null : value;
+    if (typeof value === 'number') {
+      const d = new Date(value);
+      return isNaN(d) ? null : d;
+    }
+    const str = String(value).trim();
+    const dotNet = str.match(/\/Date\((\d+)\)\//);
+    if (dotNet) {
+      const d = new Date(Number(dotNet[1]));
+      return isNaN(d) ? null : d;
+    }
+    if (/^\d{10,13}$/.test(str)) {
+      const d = new Date(Number(str.length === 10 ? Number(str) * 1000 : str));
+      return isNaN(d) ? null : d;
+    }
+    const d = new Date(str);
+    return isNaN(d) ? null : d;
+  }
+
+  function getCreatedDate(item) {
+    return parseDate(getValue(item, ['CreatedOn', 'CreatedDate', 'createdDate', 'Created On', 'Created', 'System.CreatedDate']));
+  }
+
+  function getClosedDate(item) {
+    return parseDate(getValue(item, ['ClosedOn', 'ClosedDate', 'closedDate', 'Closed On', 'ResolvedOn', 'ResolvedDate', 'Resolved On', 'Microsoft.VSTS.Common.ClosedDate']));
+  }
+
+  function isClosedState(value) {
+    const s = cleanText(value, '').toLowerCase();
+    return ['closed', 'done', 'resolved', 'completed', 'fixed'].some(x => s.includes(x));
+  }
+
+  function severityBucket(value) {
+    const s = cleanText(value, 'Unknown').toLowerCase();
+    if (s.includes('critical') || s === '1' || s.includes('sev 1')) return 'Critical';
+    if (s.includes('high') || s === '2' || s.includes('sev 2')) return 'High';
+    if (s.includes('medium') || s === '3' || s.includes('sev 3')) return 'Medium';
+    if (s.includes('low') || s === '4' || s.includes('sev 4')) return 'Low';
+    return 'Unknown';
+  }
+
+  function stateBucket(value) {
+    const s = cleanText(value, 'Unknown');
+    const l = s.toLowerCase();
+    if (l.includes('new')) return 'New';
+    if (l.includes('progress') || l.includes('active') || l.includes('committed')) return 'In Progress';
+    if (l.includes('review') || l.includes('qa') || l.includes('test')) return 'Review';
+    if (l.includes('block')) return 'Blocked';
+    if (isClosedState(s)) return 'Closed';
+    return s === 'Unknown' ? 'Unknown' : 'Active';
+  }
+
+  function acvFromItem(item) {
+    const raw = getValue(item, ['ACV', 'Acv', 'acv', 'ACVImpact', 'RevenueImpact', 'Value'], '');
+    const numeric = Number(String(raw).replace(/[^0-9.-]/g, ''));
+    if (!isNaN(numeric) && numeric > 0) return numeric;
+    const sev = severityBucket(getValue(item, ['Severity'], ''));
+    if (sev === 'Critical') return 50000;
+    if (sev === 'High') return 20000;
+    if (sev === 'Medium') return 10000;
+    if (sev === 'Low') return 5000;
+    return 0;
+  }
+
+  function daysBetween(a, b) {
+    return Math.floor((b - a) / 86400000);
+  }
+
+  function monthKey(d) {
+    return `${d.getFullYear()}-${String(d.getMonth()).padStart(2, '0')}`;
+  }
+
+  function monthLabel(key) {
+    const [year, month] = key.split('-').map(Number);
+    return new Date(year, month, 1).toLocaleString('default', { month: 'short', year: 'numeric' });
+  }
+
+  function weekKey(d) {
+    const start = new Date(d.getFullYear(), 0, 1);
+    const days = Math.floor((d - start) / 86400000);
+    const week = Math.ceil((days + start.getDay() + 1) / 7);
+    return `${d.getFullYear()}-W${String(week).padStart(2, '0')}`;
+  }
+
+  function getDateRangeBounds(range) {
+    const end = new Date();
+    const start = new Date(end);
+    switch (range) {
+      case 'Last 3 Months': start.setMonth(start.getMonth() - 3); break;
+      case 'Last 6 Months': start.setMonth(start.getMonth() - 6); break;
+      case 'Last 12 Months': start.setMonth(start.getMonth() - 12); break;
+      case 'This Month': start.setDate(1); start.setHours(0,0,0,0); break;
+      default: start.setMonth(start.getMonth() - 6);
+    }
+    return { start, end };
+  }
+
+  function getDateFilteredData(range, sourceData) {
+    const data = Array.isArray(sourceData) ? sourceData : [];
+    const { start, end } = getDateRangeBounds(range || state.filters.dateRange);
+    return data.filter(item => {
+      const created = getCreatedDate(item);
+      return created && created >= start && created <= end;
+    });
+  }
+
+  function buildOptions(select, values, selectedValue) {
+    const unique = [...new Set(values.map(v => cleanText(v)).filter(Boolean))].sort((a, b) => a.localeCompare(b));
+    select.innerHTML = unique.map(v => `<option value="${escapeHtml(v)}">${escapeHtml(v)}</option>`).join('');
+    if (selectedValue && unique.includes(selectedValue)) select.value = selectedValue;
+  }
+
+  function syncFiltersFromControls() {
+    state.filters = {
+      dateRange: dateRange.value,
+      product: productFilter.value,
+      customer: customerFilter.value,
+      status: statusFilter.value,
+      severity: severityFilter.value
+    };
+  }
+
+  function initFilters() {
+    const data = getDateFilteredData(dateRange.value || state.filters.dateRange, window.rawData || []);
+    buildOptions(productFilter, ['All Products', ...data.map(item => getValue(item, ['ProjectName', 'Project Name', 'Project'], 'Unknown'))], state.filters.product);
+    buildOptions(statusFilter, ['All Statuses', ...data.map(item => getValue(item, ['CustomerStatus', 'Customer Status', 'Status'], 'Unknown'))], state.filters.status);
+    buildOptions(severityFilter, ['All', 'Critical', 'High', 'Medium', 'Low', 'Unknown'], state.filters.severity);
+    updateCustomerFilter();
+    themeSelect.value = state.theme;
+    applyTheme(state.theme, false);
+  }
+
+  function updateCustomerFilter() {
+    const data = getDateFilteredData(dateRange.value || state.filters.dateRange, window.rawData || []);
+    const selectedProduct = productFilter.value || 'All Products';
+    const selectedCustomer = customerFilter.value || state.filters.customer;
+    const productRows = selectedProduct === 'All Products'
+      ? data
+      : data.filter(item => cleanText(getValue(item, ['ProjectName', 'Project Name', 'Project'], 'Unknown')) === selectedProduct);
+    buildOptions(customerFilter, ['All Customers', ...productRows.map(item => getValue(item, ['CustomerName', 'Customer Name', 'Customer'], 'Unknown'))], selectedCustomer);
+  }
+
+  function getFilteredData() {
+    const data = getDateFilteredData(dateRange.value || state.filters.dateRange, window.rawData || []);
+    const product = productFilter.value || 'All Products';
+    const customer = customerFilter.value || 'All Customers';
+    const status = statusFilter.value || 'All Statuses';
+    const severity = severityFilter.value || 'All';
+
+    return data.filter(item => {
+      const itemProduct = cleanText(getValue(item, ['ProjectName', 'Project Name', 'Project'], 'Unknown'));
+      const itemCustomer = cleanText(getValue(item, ['CustomerName', 'Customer Name', 'Customer'], 'Unknown'));
+      const itemStatus = cleanText(getValue(item, ['CustomerStatus', 'Customer Status', 'Status'], 'Unknown'));
+      const itemSeverity = severityBucket(getValue(item, ['Severity'], 'Unknown'));
+      return (product === 'All Products' || itemProduct === product) &&
+             (customer === 'All Customers' || itemCustomer === customer) &&
+             (status === 'All Statuses' || itemStatus === status) &&
+             (severity === 'All' || itemSeverity === severity);
+    });
+  }
+
+  function processDefectData(data) {
+    const rows = Array.isArray(data) ? data : [];
+    const now = new Date();
+    const productsMap = {};
+    const monthMap = {};
+    const weekMap = {};
+    const devMap = {};
+
+    let pending = 0;
+    let closed = 0;
+    let highCritical = 0;
+    let slaMet = 0;
+    let slaMissed = 0;
+    let openOver4Weeks = 0;
+    let totalAge = 0;
+    let ageCount = 0;
+
+    rows.forEach(item => {
+      const product = cleanText(getValue(item, ['ProjectName', 'Project Name', 'Project'], 'Unknown'));
+      const customer = cleanText(getValue(item, ['CustomerName', 'Customer Name', 'Customer'], 'Unknown'));
+      const status = cleanText(getValue(item, ['CustomerStatus', 'Customer Status'], 'Unknown'));
+      const stateText = cleanText(getValue(item, ['State', 'Status', 'WorkItemState'], 'Unknown'));
+      const closedState = isClosedState(stateText);
+      const sev = severityBucket(getValue(item, ['Severity'], 'Unknown'));
+      const stBucket = stateBucket(stateText);
+      const created = getCreatedDate(item);
+      const closedDate = getClosedDate(item);
+      const acv = acvFromItem(item);
+      const developer = cleanText(getValue(item, ['AssignedTo', 'Assigned To', 'Developer', 'Owner'], 'Unassigned'), 'Unassigned');
+
+      if (!productsMap[product]) {
+        productsMap[product] = {
+          name: product,
+          customer,
+          status,
+          pending: 0,
+          highCritical: 0,
+          old8w: 0,
+          acv: 0,
+          severityMix: { Critical: 0, High: 0, Medium: 0, Low: 0, Unknown: 0 },
+          stateMix: { New: 0, Active: 0, 'In Progress': 0, Review: 0, Blocked: 0, Closed: 0, Unknown: 0 }
+        };
+      }
+
+      productsMap[product].acv += acv;
+      productsMap[product].severityMix[sev] = (productsMap[product].severityMix[sev] || 0) + 1;
+      productsMap[product].stateMix[stBucket] = (productsMap[product].stateMix[stBucket] || 0) + 1;
+
+      if (sev === 'Critical' || sev === 'High') {
+        highCritical++;
+        productsMap[product].highCritical++;
+      }
+
+      if (created) {
+        const currentAge = daysBetween(created, closedState && closedDate ? closedDate : now);
+        totalAge += Math.max(0, currentAge);
+        ageCount++;
+
+        const mKey = monthKey(created);
+        if (!monthMap[mKey]) monthMap[mKey] = { created: 0, closed: 0 };
+        monthMap[mKey].created++;
+
+        const wKey = weekKey(created);
+        if (!weekMap[wKey]) weekMap[wKey] = { created: 0, closed: 0 };
+        weekMap[wKey].created++;
+      }
+
+      if (closedState) {
+        closed++;
+        if (created) {
+          const closeForSla = closedDate || now;
+          const closeDays = daysBetween(created, closeForSla);
+          if (closeDays <= 28) slaMet++;
+          else slaMissed++;
+        }
+        if (closedDate) {
+          const mKey = monthKey(closedDate);
+          if (!monthMap[mKey]) monthMap[mKey] = { created: 0, closed: 0 };
+          monthMap[mKey].closed++;
+          const wKey = weekKey(closedDate);
+          if (!weekMap[wKey]) weekMap[wKey] = { created: 0, closed: 0 };
+          weekMap[wKey].closed++;
+        } else if (created) {
+          monthMap[monthKey(created)].closed++;
+          weekMap[weekKey(created)].closed++;
+        }
+        if (!devMap[developer]) devMap[developer] = { name: developer, closed: 0 };
+        devMap[developer].closed++;
+      } else {
+        pending++;
+        productsMap[product].pending++;
+        if (created) {
+          const openDays = daysBetween(created, now);
+          if (openDays > 28) {
+            openOver4Weeks++;
+            slaMissed++;
+          }
+          if (openDays > 56) productsMap[product].old8w++;
+        }
+      }
+    });
+
+    const monthKeys = Object.keys(monthMap).sort();
+    const weekKeys = Object.keys(weekMap).sort().slice(-8);
+    const totalSLA = slaMet + slaMissed;
+    const totalACV = Object.values(productsMap).reduce((sum, p) => sum + p.acv, 0);
+
+    return {
+      products: Object.values(productsMap).sort((a, b) => b.pending - a.pending),
+      developers: Object.values(devMap).sort((a, b) => b.closed - a.closed),
+      createdClosed: {
+        labels: monthKeys.map(monthLabel),
+        created: monthKeys.map(k => monthMap[k].created || 0),
+        closed: monthKeys.map(k => monthMap[k].closed || 0)
+      },
+      weekly: {
+        labels: weekKeys,
+        created: weekKeys.map(k => weekMap[k].created || 0),
+        closed: weekKeys.map(k => weekMap[k].closed || 0)
+      },
+      kpis: {
+        pendingBacklog: pending,
+        totalClosed: closed,
+        createdThisMonth: monthKeys.length ? monthMap[monthKeys[monthKeys.length - 1]].created : 0,
+        closedThisMonth: monthKeys.length ? monthMap[monthKeys[monthKeys.length - 1]].closed : 0,
+        slaPercent: totalSLA ? (slaMet / totalSLA) * 100 : 0,
+        met: slaMet,
+        missed: slaMissed,
+        acvImpact: totalACV,
+        highImpactItems: highCritical,
+        openOver4Weeks,
+        averageAgeDays: ageCount ? Math.round(totalAge / ageCount) : 0
+      }
+    };
+  }
+
+  function applyProcessed(processed) {
+    baseData = { ...emptyBaseData(), ...processed };
+  }
+
+  function css(name) {
+    return getComputedStyle(document.body).getPropertyValue(name).trim();
+  }
+
+  function applyTheme(theme, redraw = true) {
+    state.theme = theme;
+    body.setAttribute('data-theme', theme);
+    localStorage.setItem('defect_theme', theme);
+    if (redraw) refreshCharts();
+  }
+
+  function aggregateSeverity(products) {
+    const out = { Critical: 0, High: 0, Medium: 0, Low: 0, Unknown: 0 };
+    products.forEach(p => Object.keys(out).forEach(k => out[k] += Number(p.severityMix[k] || 0)));
+    if (state.filters.severity !== 'All') return { [state.filters.severity]: out[state.filters.severity] || 0 };
+    return out;
+  }
+
+  function aggregateState(products) {
+    const out = { New: 0, Active: 0, 'In Progress': 0, Review: 0, Blocked: 0, Closed: 0, Unknown: 0 };
+    products.forEach(p => Object.keys(out).forEach(k => out[k] += Number(p.stateMix[k] || 0)));
+    return out;
+  }
+
+  function renderMeta() {
+    const now = new Date();
+    metaRow.innerHTML = `
+      <div class="chip">Filters: ${escapeHtml(state.filters.product)} • ${escapeHtml(state.filters.customer)} • ${escapeHtml(state.filters.status)} • ${escapeHtml(state.filters.dateRange)}</div>
+      <div class="chip">Rows in view: ${getFilteredData().length}</div>
+      <div class="chip">Last refreshed: ${now.toLocaleDateString()} ${now.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })}</div>
+    `;
+  }
+
+  function kpiClass(label, kpis) {
+    if (label.includes('4-Week')) return kpis.slaPercent >= 80 ? 'success' : (kpis.slaPercent >= 60 ? 'warning' : 'danger');
+    if (label.includes('Pending')) return kpis.pendingBacklog ? 'danger' : 'success';
+    if (label.includes('Closed')) return 'success';
+    return 'warning';
+  }
+
+  function renderKpis(kpis) {
+    const closureRate = Math.round((kpis.closedThisMonth / Math.max(1, kpis.createdThisMonth)) * 100);
+    const items = [
+      ['Pending Backlog', kpis.pendingBacklog, `${kpis.openOver4Weeks} open > 4 weeks`],
+      ['Total Closed So Far', kpis.totalClosed, `${kpis.closedThisMonth} closed in latest month`],
+      ['Created This Month', kpis.createdThisMonth, `${kpis.createdThisMonth - kpis.closedThisMonth >= 0 ? '+' : ''}${kpis.createdThisMonth - kpis.closedThisMonth} net inflow`],
+      ['Closed This Month', kpis.closedThisMonth, `${closureRate}% of created`],
+      ['4-Week Target Met', `${kpis.slaPercent.toFixed(1)}%`, `${kpis.met} met / ${kpis.missed} missed`],
+      ['Pending ACV Impact', `₹${(kpis.acvImpact / 100000).toFixed(1)}L`, `${kpis.highImpactItems} high-impact items`]
+    ];
+    kpiGrid.innerHTML = items.map(([label, value, foot]) => `
+      <div class="card kpi-card">
+        <div class="kpi-label">${escapeHtml(label)}</div>
+        <div class="kpi-value">${escapeHtml(value)}</div>
+        <div class="kpi-foot ${kpiClass(label, kpis)}">${escapeHtml(foot)}</div>
+      </div>
+    `).join('');
+  }
+
+  function renderProductBars(products) {
+    const source = Array.isArray(products) ? products : [];
+    const { filtered, pageRows, start, end } = applyListFilterSortPage('productBars', source, 'name', 'pending');
+    const max = Math.max(...source.map(p => Number(p.pending || 0)), 1);
+    const colors = [css('--accent'), css('--accent-2'), '#cf900d', css('--success')];
+    productBars.innerHTML = controlHtml('productBars', 'Search products...', [
+        { value: 'value-desc', label: 'High to low' },
+        { value: 'value-asc', label: 'Low to high' },
+        { value: 'name-asc', label: 'A to Z' },
+        { value: 'name-desc', label: 'Z to A' }
+      ]) +
+      (pageRows.length ? pageRows.map((p, i) => `
+        <div class="bar-row">
+          <div class="bar-label">${escapeHtml(p.name)}</div>
+          <div class="bar-track"><div class="bar-fill" style="width:${(Number(p.pending || 0) / max) * 100}%; background:${colors[i % colors.length]};"></div></div>
+          <div class="bar-value">${escapeHtml(p.pending)}</div>
+        </div>
+      `).join('') : '<div class="subtext">No product data for selected search/filter.</div>') +
+      pagerHtml('productBars', filtered.length, start, end);
+    const top = source.slice().sort((a, b) => Number(b.pending || 0) - Number(a.pending || 0))[0];
+    el('productFoot').textContent = top ? `Highest backlog: ${top.name}` : 'No matching products';
+    attachGridEvents();
+  }
+
+  function renderDeveloperBars() {
+    const devs = Array.isArray(baseData.developers) ? baseData.developers : [];
+    const { filtered, pageRows, start, end } = applyListFilterSortPage('developerBars', devs, 'name', 'closed');
+    const max = Math.max(...devs.map(d => Number(d.closed || 0)), 1);
+    developerBars.innerHTML = controlHtml('developerBars', 'Search developers...', [
+        { value: 'value-desc', label: 'High to low' },
+        { value: 'value-asc', label: 'Low to high' },
+        { value: 'name-asc', label: 'A to Z' },
+        { value: 'name-desc', label: 'Z to A' }
+      ]) +
+      (pageRows.length ? pageRows.map(d => `
+        <div class="bar-row">
+          <div class="bar-label">${escapeHtml(d.name)}</div>
+          <div class="bar-track"><div class="bar-fill" style="width:${(Number(d.closed || 0) / max) * 100}%; background:${css('--success')};"></div></div>
+          <div class="bar-value">${escapeHtml(d.closed)}</div>
+        </div>
+      `).join('') : '<div class="subtext">No closure owner data for selected search/filter.</div>') +
+      pagerHtml('developerBars', filtered.length, start, end);
+    const top = devs.slice().sort((a, b) => Number(b.closed || 0) - Number(a.closed || 0))[0];
+    el('devFoot').textContent = top ? `Top closer: ${top.name}` : 'No developer data';
+    attachGridEvents();
+  }
+
+  function renderAttention(products) {
+    const st = gridState.attentionTable;
+    const q = st.filter.trim().toLowerCase();
+    let rows = (products || []).map(p => ({
+      product: p.name,
+      pending: Number(p.pending || 0),
+      high: Number(p.highCritical || 0),
+      acv: Number(p.acv || 0),
+      old: Number(p.old8w || 0)
+    })).filter(r => !q || Object.values(r).some(v => String(v ?? '').toLowerCase().includes(q)));
+    rows.sort((a, b) => {
+      const [field, dir] = st.sort.split('-');
+      const av = field === 'product' ? a.product : Number(a[field] || 0);
+      const bv = field === 'product' ? b.product : Number(b[field] || 0);
+      const result = field === 'product' ? String(av).localeCompare(String(bv)) : av - bv;
+      return dir === 'asc' ? result : -result;
+    });
+    const pageSize = Number(st.pageSize || DEFAULT_PAGE_SIZE);
+    const totalPages = Math.max(1, Math.ceil(rows.length / pageSize));
+    st.page = Math.min(Math.max(1, st.page), totalPages);
+    const start = (st.page - 1) * pageSize;
+    const pageRows = rows.slice(start, start + pageSize);
+    const end = Math.min(start + pageSize, rows.length);
+    const wrap = attentionTable.closest('.table-wrap');
+    if (wrap) {
+      const existingTools = wrap.querySelector('[data-grid-tools="attentionTable"]');
+      if (existingTools) existingTools.remove();
+      wrap.insertAdjacentHTML('afterbegin', controlHtml('attentionTable', 'Search table...', [
+        { value: 'pending-desc', label: 'Pending high' },
+        { value: 'pending-asc', label: 'Pending low' },
+        { value: 'high-desc', label: 'High/Critical' },
+        { value: 'old-desc', label: 'Oldest risk' },
+        { value: 'product-asc', label: 'Product A-Z' },
+        { value: 'product-desc', label: 'Product Z-A' }
+      ]));
+    }
+    attentionTable.innerHTML = pageRows.length ? pageRows.map(d => `
+      <tr>
+        <td>${escapeHtml(d.product)}</td>
+        <td>${escapeHtml(d.pending)}</td>
+        <td>${escapeHtml(d.high)}</td>
+        <td>₹${(Number(d.acv || 0) / 100000).toFixed(1)}L</td>
+        <td>${escapeHtml(d.old)}</td>
+      </tr>
+    `).join('') : '<tr><td colspan="5">No matching records.</td></tr>';
+    if (wrap) {
+      const existingPager = wrap.querySelector('[data-grid-pager="attentionTable"]');
+      if (existingPager) existingPager.remove();
+      wrap.insertAdjacentHTML('beforeend', pagerHtml('attentionTable', rows.length, start, end));
+    }
+    attachGridEvents();
+  }
+
+  function chartBase() {
+    return {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: { legend: { labels: { color: css('--muted'), boxWidth: 10, usePointStyle: true, pointStyle: 'circle' } } },
+      scales: {
+        x: { ticks: { color: css('--muted') }, grid: { color: 'transparent' } },
+        y: { beginAtZero: true, ticks: { color: css('--muted') }, grid: { color: css('--line') } }
+      }
+    };
+  }
+
+  function destroyChart(chart) {
+    if (chart) chart.destroy();
+  }
+
+  function refreshCharts(products = baseData.products, severity = aggregateSeverity(products), states = aggregateState(products), kpis = baseData.kpis) {
+    if (!window.Chart) return;
+
+    destroyChart(trendChart);
+    trendChart = new Chart(el('trendChart'), {
+      type: 'line',
+      data: {
+        labels: baseData.createdClosed.labels,
+        datasets: [
+          { label: 'Created', data: baseData.createdClosed.created, borderColor: css('--accent'), backgroundColor: css('--accent'), tension: .35, pointRadius: 3 },
+          { label: 'Closed', data: baseData.createdClosed.closed, borderColor: css('--success'), backgroundColor: css('--success'), tension: .35, pointRadius: 3 }
+        ]
+      },
+      options: chartBase()
+    });
+
+    destroyChart(severityChart);
+    severityChart = new Chart(el('severityChart'), {
+      type: 'bar',
+      data: { labels: Object.keys(severity), datasets: [{ data: Object.values(severity), backgroundColor: [css('--danger'), css('--warning'), css('--accent'), css('--success'), '#8ea0b8'], borderRadius: 10 }] },
+      options: { ...chartBase(), plugins: { legend: { display: false } } }
+    });
+
+    destroyChart(stateChart);
+    stateChart = new Chart(el('stateChart'), {
+      type: 'bar',
+      data: { labels: Object.keys(states), datasets: [{ data: Object.values(states), backgroundColor: [css('--accent-2'), css('--success'), css('--accent'), '#8ea0b8', css('--danger'), css('--success'), '#9aa8bd'], borderRadius: 10 }] },
+      options: { ...chartBase(), indexAxis: 'y', plugins: { legend: { display: false } } }
+    });
+
+    destroyChart(weeklyChart);
+    weeklyChart = new Chart(el('weeklyChart'), {
+      type: 'bar',
+      data: {
+        labels: baseData.weekly.labels,
+        datasets: [
+          { label: 'Created', data: baseData.weekly.created, backgroundColor: css('--accent'), borderRadius: 999, barThickness: 14 },
+          { label: 'Closed', data: baseData.weekly.closed, backgroundColor: css('--success'), borderRadius: 999, barThickness: 14 }
+        ]
+      },
+      options: chartBase()
+    });
+
+    destroyChart(slaChart);
+    slaChart = new Chart(el('slaChart'), {
+      type: 'doughnut',
+      data: { labels: ['Met', 'Missed'], datasets: [{ data: [kpis.met, kpis.missed], backgroundColor: [css('--success'), css('--missed-ring')], borderWidth: 0, hoverOffset: 0 }] },
+      options: { responsive: true, maintainAspectRatio: false, cutout: '78%', plugins: { legend: { display: false } } }
+    });
+  }
+
+  function renderAll(updateInsight = true) {
+    syncFiltersFromControls();
+    renderMeta();
+    const products = baseData.products || [];
+    const severity = aggregateSeverity(products);
+    const states = aggregateState(products);
+    const kpis = baseData.kpis || emptyBaseData().kpis;
+
+    renderKpis(kpis);
+    renderProductBars(products);
+    renderDeveloperBars();
+    renderAttention(products);
+
+    el('trendFoot').textContent = `Pending latest view: ${kpis.pendingBacklog}`;
+    el('severityFoot').textContent = `${kpis.pendingBacklog} open items`;
+    const topState = Object.entries(states).sort((a, b) => b[1] - a[1])[0];
+    el('stateFoot').textContent = topState ? `Top state: ${topState[0]}` : 'No state data';
+    el('weeklyFoot').textContent = `8-week closure total: ${(baseData.weekly.closed || []).reduce((a, b) => a + b, 0)}`;
+    el('metLabel').textContent = `Met: ${kpis.met}`;
+    el('missedLabel').textContent = `Missed: ${kpis.missed}`;
+    el('slaCenter').textContent = `${Math.round(kpis.slaPercent)}%`;
+    el('slaFoot').textContent = `${kpis.slaPercent.toFixed(1)}% met within 4 weeks`;
+
+    refreshCharts(products, severity, states, kpis);
+    if (updateInsight) generateInsight(el('aiPrompt')?.value || 'Summarize current dashboard', false);
+  }
+
+  function updateDashboard() {
+    resetGridPages();
+    syncFiltersFromControls();
+    const filteredData = getFilteredData();
+    applyProcessed(processDefectData(filteredData));
+    renderAll();
+  }
+
+  function generateInsight(userPrompt = '', open = true) {
+    const promptText = String(userPrompt || el('aiPrompt')?.value || 'Summarize current dashboard').trim();
+    const products = baseData.products || [];
+    const kpis = baseData.kpis || emptyBaseData().kpis;
+    const severity = aggregateSeverity(products);
+    const states = aggregateState(products);
+    const topProduct = products[0];
+    const sevTop = Object.entries(severity).sort((a, b) => b[1] - a[1])[0] || ['None', 0];
+    const stateTop = Object.entries(states).sort((a, b) => b[1] - a[1])[0] || ['None', 0];
+    const netInflow = kpis.createdThisMonth - kpis.closedThisMonth;
+    const productText = topProduct ? topProduct.name : 'no product';
+
+    let summary = `Current filtered view has ${kpis.pendingBacklog} pending defects across ${products.length} product area(s). ${productText} has the highest backlog${topProduct ? ` with ${topProduct.pending} pending item(s)` : ''}. Latest month created ${kpis.createdThisMonth} and closed ${kpis.closedThisMonth}.`;
+    let risk = `${kpis.highImpactItems} item(s) are High/Critical. ${kpis.openOver4Weeks} open item(s) are older than 4 weeks. The leading severity is ${sevTop[0]} (${sevTop[1]}) and the leading state is ${stateTop[0]} (${stateTop[1]}).`;
+    let action = `Prioritize ${productText}, review items older than 4 weeks first, and keep weekly closure above new inflow${netInflow > 0 ? ` by at least ${netInflow} item(s)` : ''}.`;
+
+    const p = promptText.toLowerCase();
+    if (p.includes('backlog risk')) {
+      summary = `Backlog risk is ${kpis.pendingBacklog > kpis.totalClosed || kpis.slaPercent < 60 ? 'HIGH' : 'CONTROLLED'} for the selected view.`;
+      risk = `${kpis.pendingBacklog} pending, ${kpis.openOver4Weeks} open over 4 weeks, ${kpis.highImpactItems} High/Critical, and ${kpis.slaPercent.toFixed(1)}% 4-week compliance.`;
+      action = `Assign owners to old High/Critical items and target the largest state queue: ${stateTop[0]}.`;
+    } else if (p.includes('most attention')) {
+      summary = `${productText} needs the most attention in the current filter.`;
+      risk = topProduct ? `${productText} has ${topProduct.pending} pending, ${topProduct.highCritical} High/Critical, and ${topProduct.old8w} item(s) older than 8 weeks.` : 'No product is currently selected in the view.';
+      action = topProduct ? `Start with ${productText} aging and High/Critical defects before lower-severity backlog.` : 'No action needed because the filtered view has no product data.';
+    } else if (p.includes('created') || p.includes('closed') || p.includes('trend')) {
+      summary = netInflow > 0 ? `Created defects are higher than closed by ${netInflow} in the latest month.` : `Closures are matching or exceeding created defects by ${Math.abs(netInflow)} in the latest month.`;
+      risk = netInflow > 0 ? 'Backlog may increase if this trend continues.' : 'Closure trend is healthy for the latest month.';
+      action = netInflow > 0 ? `Increase monthly closures by at least ${netInflow} to stop backlog growth.` : 'Maintain the current closure cadence and monitor new inflow.';
+    } else if (p.includes('4') || p.includes('week') || p.includes('sla') || p.includes('target')) {
+      summary = `4-week target compliance is ${kpis.slaPercent.toFixed(1)}%.`;
+      risk = `${kpis.met} item(s) met the 4-week target and ${kpis.missed} item(s) missed it. Missed includes closed-after-28-days plus open items already older than 28 days.`;
+      action = `Review the ${kpis.openOver4Weeks} open item(s) older than 4 weeks and close or re-prioritize them first.`;
+    }
+
+    el('summaryText').textContent = summary;
+    el('riskText').textContent = risk;
+    el('actionText').textContent = action;
+    if (open) openDrawer();
+  }
+
+  function openDrawer() {
+    el('aiDrawer').classList.add('open');
+    el('drawerOverlay').classList.add('show');
+  }
+
+  function closeDrawer() {
+    el('aiDrawer').classList.remove('open');
+    el('drawerOverlay').classList.remove('show');
+  }
+
+  function setupEvents() {
+    themeSelect.addEventListener('change', e => applyTheme(e.target.value));
+    dateRange.addEventListener('change', () => {
+      state.filters.dateRange = dateRange.value;
+      initFilters();
+      updateDashboard();
+    });
+    productFilter.addEventListener('change', () => {
+      state.filters.product = productFilter.value;
+      updateCustomerFilter();
+      updateDashboard();
+    });
+    customerFilter.addEventListener('change', updateDashboard);
+    statusFilter.addEventListener('change', updateDashboard);
+    severityFilter.addEventListener('change', updateDashboard);
+    el('applyBtn').addEventListener('click', updateDashboard);
+    el('resetBtn').addEventListener('click', () => {
+      dateRange.value = 'Last 6 Months';
+      state.filters = { dateRange: 'Last 6 Months', product: 'All Products', customer: 'All Customers', status: 'All Statuses', severity: 'All' };
+      initFilters();
+      updateDashboard();
+    });
+    el('openAiBtn').addEventListener('click', () => { generateInsight(el('aiPrompt').value || 'Summarize current dashboard'); });
+    el('fabBtn').addEventListener('click', () => { generateInsight(el('aiPrompt').value || 'Summarize current dashboard'); });
+    el('closeDrawerBtn').addEventListener('click', closeDrawer);
+    el('drawerOverlay').addEventListener('click', closeDrawer);
+    el('generateBtn').addEventListener('click', () => generateInsight(el('aiPrompt').value));
+    document.querySelectorAll('.prompt-chip').forEach(btn => {
+      btn.addEventListener('click', () => {
+        el('aiPrompt').value = btn.textContent.trim();
+        generateInsight(btn.textContent.trim());
+      });
+    });
+    el('readBtn').addEventListener('click', () => {
+      const text = `${el('summaryText').textContent}. ${el('riskText').textContent}. ${el('actionText').textContent}`;
+      if ('speechSynthesis' in window) {
+        speechSynthesis.cancel();
+        speechSynthesis.speak(new SpeechSynthesisUtterance(text));
+      }
+    });
+  }
+
+  async function loadData() {
+    let data = [];
+    try {
+      const res = await fetch('data.json', { cache: 'no-store' });
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      data = await res.json();
+      if (!Array.isArray(data)) throw new Error('data.json must contain an array');
+    } catch (err) {
+      console.warn('data.json not loaded, using built-in sample rows.', err);
+      data = SAMPLE_DATA;
+    }
+    window.rawData = data;
+    initFilters();
+    updateDashboard();
+  }
+
+  document.addEventListener('DOMContentLoaded', () => {
+    setupEvents();
+    loadData();
+  });
+})();
+
+</script>
+
+</body>
+</html>
